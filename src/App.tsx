@@ -1,6 +1,7 @@
 import Home from './pages/Home'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AlbumPage from './pages/AlbumPage'
+import Profile from './pages/Profile'
 
 function App() {
 
@@ -9,6 +10,7 @@ function App() {
       <Routes>
         <Route path='/' element={<Home/>}/>
         <Route path='/album/:id' element={<AlbumPage/>}/>
+        <Route path='/profile' element={<Profile/>}/>
       </Routes>
     </BrowserRouter>
   )
