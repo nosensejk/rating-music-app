@@ -6,6 +6,11 @@ export interface Album {
    coverUrl: string;
 }
 
+export interface Track {
+   title: string;
+   length: string;
+}
+
 export interface AlbumDetails extends Album {
-   tracks: string[];
+   tracks: Track[];
 }

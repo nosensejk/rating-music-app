@@ -179,8 +179,11 @@ export default function AlbumPage() {
 
             <ol className="space-y-2">
               {album.tracks.map((track, index) => (
-                <li key={index} className="rounded bg-slate-700 px-4 py-3">
-                  {index + 1}. {track}
+                <li key={index} className="flex items-center justify-between rounded bg-slate-700 px-4 py-3">
+                  <span>
+                    {index + 1}. {track.title}
+                  </span>
+                  <span className="text-slate-400 text-sm">{track.length}</span>
                 </li>
               ))}
             </ol>

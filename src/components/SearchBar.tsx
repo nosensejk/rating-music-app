@@ -58,6 +58,14 @@ export default function SearchBar() {
               </div>
             </Link>
           ))}
+          {query.trim() && (
+            <Link to={`/search?q=${encodeURIComponent(query)}`} onClick={() => {
+              setOpen(false);
+              setQuery("");
+            }} className="block border-t border-slate-600 px-4 py-3 text-center text-blue-400 hover:bg-slate-600">
+               Show all results →
+            </Link>
+          )}
         </div>
       )}
     </div>

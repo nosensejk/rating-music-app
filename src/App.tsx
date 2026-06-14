@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AlbumPage from './pages/AlbumPage'
 import Profile from './pages/Profile'
 import Header from './components/Header'
+import Search from './pages/Search'
 
 function App() {
 
@@ -13,6 +14,7 @@ function App() {
         <Route path='/' element={<Home/>}/>
         <Route path='/album/:id' element={<AlbumPage/>}/>
         <Route path='/profile' element={<Profile/>}/>
+        <Route path='/search' element={<Search/>}/>
       </Routes>
     </BrowserRouter>
   )

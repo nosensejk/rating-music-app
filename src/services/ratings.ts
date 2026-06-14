@@ -1,5 +1,14 @@
 import { supabase } from "../lib/supabase";
 
+export interface TopAlbum {
+  album_id: string;
+  album_title: string;
+  artist_name: string;
+  cover_url: string;
+  avg_rating: number;
+  ratings_count: number;
+}
+
 export async function rateAlbum(
   albumId: string,
   rating: number,
@@ -82,4 +91,36 @@ export async function deleteRating(albumId: string) {
   if (error) {
     throw error;
   }
+}
+
+export async function getTopAlbums(): Promise<TopAlbum[]> {
+  const { data, error } = await supabase
+    .from("ratings")
+    .select(`album_id, album_title, artist_name, cover_url, rating`);
+
+    if (error) throw error;
+    const grouped = new Map<string, TopAlbum>();
+
+    data.forEach((row) => {
+      const existing = grouped.get(row.album_id);
+      if (existing) {
+        existing.avg_rating += row.rating;
+        existing.ratings_count += 1;
+      } else {
+        grouped.set(row.album_id, {
+          album_id: row.album_id,
+          album_title: row.album_title,
+          artist_name: row.artist_name,
+          cover_url: row. cover_url,
+          avg_rating: row.rating,
+          ratings_count: 1,
+        });
+      }
+    });
+
+    const albums = Array.from(grouped.values()).map((album) => ({
+      ...album, avg_rating: album.avg_rating / album.ratings_count,
+    })).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 20);
+
+    return albums;
 }
