@@ -1,0 +1,65 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { searchAlbums } from "../services/musicBrainz";
+import { type Album } from "../types/album";
+
+export default function SearchBar() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Album[]>([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!query.trim()) {
+        setResults([]);
+        return;
+      }
+      try {
+        const albums = await searchAlbums(query);
+        setResults(albums.slice(0, 5));
+        setOpen(true);
+      } catch (error) {
+        console.error(error);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  return (
+    <div className="relative w-96">
+      <input
+        type="text"
+        value={query}
+        placeholder="Search..."
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white outline-none focus:border-blue-500"
+      />
+      {open && results.length > 0 && (
+        <div className="absolute top-full mt-2 w-full overflow-hidden rounded-xl border border-slate-600 bg-slate-700 shadow-xl">
+          {results.map((album) => (
+            <Link
+              key={album.id}
+              to={`/album/${album.id}`}
+              onClick={() => {
+                setOpen(false);
+                setQuery("");
+              }}
+              className="flex items-center gap-3 p-3 transition hover:bg-zinc-800"
+            >
+              <img
+                src={album.coverUrl}
+                alt={album.title}
+                className="h-12 w-12 rounded object-cover"
+              />
+              <div>
+                <p className="font-medium text-white">{album.title}</p>
+                <p className="text-sm text-zinc-400">{album.artist}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

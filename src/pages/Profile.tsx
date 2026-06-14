@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { getAlbumDetails } from "../services/musicBrainz";
-
 
 interface RatedAlbum {
   id: string;
@@ -34,18 +32,13 @@ export default function Profile() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        const ratedAlbums = await Promise.all(
-          (ratings ?? []).map(async (rating) => {
-            const album = await getAlbumDetails(rating.album_id);
-            return {
-              id: album.id,
-              title: album.title,
-              artist: album.artist,
-              coverUrl: album.coverUrl,
-              rating: rating.rating,
-            };
-          }),
-        );
+        const ratedAlbums = ratings?.map((rating) => ({
+          id: rating.album_id,
+          title: rating.album_title,
+          artist: rating.artist_name,
+          coverUrl: rating.cover_url,
+          rating: rating.rating,
+        })) ?? [];
         setAlbums(ratedAlbums);
       } catch (error) {
         console.error(error);
@@ -58,14 +51,14 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-800 text-white flex items-center justify-center">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="text-4xl font-bold mb-2">My Profile</h1>
         <p className="text-zinc-400 mb-8">{userEmail}</p>

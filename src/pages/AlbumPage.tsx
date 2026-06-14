@@ -2,40 +2,53 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAlbumDetails } from "../services/musicBrainz";
 import { type AlbumDetails } from "../types/album";
-import { rateAlbum, getAverageRating } from "../services/ratings";
-import { signInWithGoogle } from "../services/auth";
+import {
+  rateAlbum,
+  getAverageRating,
+  getUserRating,
+  deleteRating,
+} from "../services/ratings";
 
 export default function AlbumPage() {
   const { id } = useParams();
 
   const [album, setAlbum] = useState<AlbumDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRating, setUserRating] = useState(0);
+
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [inputRating, setInputRating] = useState<string>("");
   const [avg, setAvg] = useState(0);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   useEffect(() => {
-    async function loadAlbum() {
+    async function loadPage() {
       if (!id) return;
+
       try {
-        const data = await getAlbumDetails(id);
-        setAlbum(data);
+        const [albumData, average, rating] = await Promise.all([
+          getAlbumDetails(id),
+          getAverageRating(id),
+          getUserRating(id),
+        ]);
+
+        setAlbum(albumData);
+        setAvg(average);
+        setUserRating(rating);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     }
-    loadAlbum();
-  }, [id]);
 
-  useEffect(() => {
-    if (!id) return;
-    getAverageRating(id).then(setAvg);
+    loadPage();
   }, [id]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-800 text-white flex items-center justify-center">
         Loading...
       </div>
     );
@@ -43,14 +56,14 @@ export default function AlbumPage() {
 
   if (!album) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-slate-800 text-white flex items-center justify-center">
         Album not found
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-6xl p-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-start">
           <div>
@@ -59,46 +72,114 @@ export default function AlbumPage() {
               alt={album.title}
               className="w-full max-w-sm rounded-xl object-cover"
             />
+
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-3">Rating (0-100)</h3>
-              <p className="text-zinc-400 mb-3">
+              <h3 className="mb-3 text-xl font-semibold">Rating (0-100)</h3>
+
+              <p className="mb-2 text-slate-300">
                 Average: {avg.toFixed(1)} / 100
               </p>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={userRating}
-                  onChange={(e) => setUserRating(Number(e.target.value))}
-                  className="w-24 rounded bg-zinc-900 border border-zinc-700 px-3 py-2 text-white"
-                />
-                <button
-                  onClick={async () => {
-                    const clamped = Math.max(0, Math.min(100, userRating));
-                    await rateAlbum(id!, clamped);
-                    const newAvg = await getAverageRating(id!);
-                    setAvg(newAvg);
-                    setUserRating(0);
-                  }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded"
-                >
-                  Submit
-                </button>
-                <button onClick={signInWithGoogle} className="rounded bg-green-600 px-4 py-2 hover:bg-green-500">Sign in with Google</button>
+
+              <div className="mb-4 flex items-center gap-2">
+                {!isEditing && (
+                  <p className="font-medium text-blue-400 ">
+                    Your rating: {userRating ?? "Not rated"}
+                  </p>
+                )}
+
+                {userRating !== null && !isEditing && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpen((prev) => !prev)}
+                      className="rounded px-2 py-1 bg-slate-700/70 hover:bg-slate-700"
+                    >
+                      ⋮
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-lg border border-slate-600 bg-slate-700 shadow-lg">
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setMenuOpen(false);
+                            setInputRating(userRating?.toString() ?? "");
+                          }}
+                          className="block w-full px-4 py-2 text-left hover:bg-slate-600"
+                        >
+                          Edit rating
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await deleteRating(id!);
+                            const newAvg = await getAverageRating(id!);
+                            setAvg(newAvg);
+                            setUserRating(null);
+                            setMenuOpen(false);
+                          }}
+                          className="block w-full px-4 py-2 text-left hover:bg-slate-600"
+                        >
+                          Delete rating
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+              {(userRating === null || isEditing) && (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={inputRating}
+                    onChange={(e) => {
+                      setInputRating(e.target.value);
+                    }}
+                    className="w-24 rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
+                  />
+
+                  <button
+                    onClick={async () => {
+                      const num = Number(inputRating);
+
+                      const clamped = Math.max(0, Math.min(100, num));
+
+                      await rateAlbum(
+                        id!,
+                        clamped,
+                        album.title,
+                        album.artist,
+                        album.coverUrl,
+                      );
+
+                      const newAvg = await getAverageRating(id!);
+                      const newUserRating = await getUserRating(id!);
+
+                      setAvg(newAvg);
+                      setUserRating(newUserRating);
+                      setInputRating("");
+                      setIsEditing(false);
+                    }}
+                    className="rounded bg-blue-600 px-4 py-2 hover:bg-blue-500"
+                  >
+                    {isEditing ? "Save" : "Submit"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+
           <div>
-            <h1 className="text-5xl" font-bold>
-              {album.title}
-            </h1>
-            <p className="mt-2 text-xl text-zinc-400">{album.artist}</p>
-            <p className="mt-2 text-zinc-500">{album.year}</p>
+            <h1 className="text-5xl font-bold">{album.title}</h1>
+
+            <p className="mt-2 text-xl text-slate-300">{album.artist}</p>
+
+            <p className="mt-2 text-slate-400">{album.year}</p>
+
             <h2 className="mt-8 mb-4 text-2xl font-semibold">Tracklist</h2>
+
             <ol className="space-y-2">
               {album.tracks.map((track, index) => (
-                <li key={index} className="rounded bg-zinc-900 px-4 py-3">
+                <li key={index} className="rounded bg-slate-700 px-4 py-3">
                   {index + 1}. {track}
                 </li>
               ))}

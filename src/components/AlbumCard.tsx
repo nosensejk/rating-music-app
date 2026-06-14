@@ -8,7 +8,7 @@ interface AlbumCardProps {
 export default function AlbumCard({ album }: AlbumCardProps) {
   return (
     <Link to={`/album/${album.id}`}
-      className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 transition hover:scale-[1.03] hover:border-zinc-600"
+      className="overflow-hidden rounded-xl border border-slate-600 bg-slate-700 transition hover:scale-[1.03] hover:border-zinc-600"
     >
       <img
         src={album.coverUrl}
