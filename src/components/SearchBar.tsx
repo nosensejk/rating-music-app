@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { searchAlbums } from "../services/musicBrainz";
 import { type Album } from "../types/album";
@@ -7,6 +7,20 @@ export default function SearchBar() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Album[]>([]);
   const [open, setOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  });
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -27,7 +41,7 @@ export default function SearchBar() {
   }, [query]);
 
   return (
-    <div className="relative w-96">
+    <div ref={searchRef} className="relative w-80">
       <input
         type="text"
         value={query}
@@ -59,11 +73,15 @@ export default function SearchBar() {
             </Link>
           ))}
           {query.trim() && (
-            <Link to={`/search?q=${encodeURIComponent(query)}`} onClick={() => {
-              setOpen(false);
-              setQuery("");
-            }} className="block border-t border-slate-600 px-4 py-3 text-center text-blue-400 hover:bg-slate-600">
-               Show all results →
+            <Link
+              to={`/search?q=${encodeURIComponent(query)}`}
+              onClick={() => {
+                setOpen(false);
+                setQuery("");
+              }}
+              className="block border-t border-slate-600 px-4 py-3 text-center text-blue-400 hover:bg-slate-600"
+            >
+              Show all results →
             </Link>
           )}
         </div>

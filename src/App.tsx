@@ -4,6 +4,7 @@ import AlbumPage from './pages/AlbumPage'
 import Profile from './pages/Profile'
 import Header from './components/Header'
 import Search from './pages/Search'
+import ArtistPage from './pages/ArtistPage'
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
         <Route path='/album/:id' element={<AlbumPage/>}/>
         <Route path='/profile' element={<Profile/>}/>
         <Route path='/search' element={<Search/>}/>
+        <Route path='/artist/:id' element={<ArtistPage/>}/>
       </Routes>
     </BrowserRouter>
   )

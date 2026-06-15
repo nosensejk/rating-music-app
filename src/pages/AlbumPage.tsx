@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAlbumDetails } from "../services/musicBrainz";
 import { type AlbumDetails } from "../types/album";
@@ -171,7 +171,7 @@ export default function AlbumPage() {
           <div>
             <h1 className="text-5xl font-bold">{album.title}</h1>
 
-            <p className="mt-2 text-xl text-slate-300">{album.artist}</p>
+            <Link to={`/artist/${album.artistId}`} className="size-fit mt-2 block text-xl hover:underline">{album.artist}</Link>
 
             <p className="mt-2 text-slate-400">{album.year}</p>
 

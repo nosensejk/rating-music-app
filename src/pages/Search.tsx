@@ -14,7 +14,6 @@ export default function Search() {
     async function load() {
       try {
         const results = await searchAlbums(query);
-        console.log(results.length);
         setAlbums(results);
       } finally {
         setLoading(false);
@@ -30,7 +29,7 @@ export default function Search() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
+    <div className="mx-auto max-w-6xl p-8 bg-slate-800">
       <h1 className="mb-6 text-3xl font-bold text-white">
         Search results for "{query}"
       </h1>

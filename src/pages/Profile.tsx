@@ -21,7 +21,6 @@ export default function Profile() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        
 
         if (!user) return;
         setUserEmail(user.email ?? "");
@@ -32,13 +31,14 @@ export default function Profile() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        const ratedAlbums = ratings?.map((rating) => ({
-          id: rating.album_id,
-          title: rating.album_title,
-          artist: rating.artist_name,
-          coverUrl: rating.cover_url,
-          rating: rating.rating,
-        })) ?? [];
+        const ratedAlbums =
+          ratings?.map((rating) => ({
+            id: rating.album_id,
+            title: rating.album_title,
+            artist: rating.artist_name,
+            coverUrl: rating.cover_url,
+            rating: rating.rating,
+          })) ?? [];
         setAlbums(ratedAlbums);
       } catch (error) {
         console.error(error);
@@ -59,13 +59,13 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-slate-800 text-white">
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="text-4xl font-bold mb-2">My Profile</h1>
         <p className="text-zinc-400 mb-8">{userEmail}</p>
         <h2 className="text-2xl font-semibold mb-6">
           My Ratings ({albums.length})
         </h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           {albums.map((album) => (
             <Link
               key={album.id}
@@ -77,10 +77,19 @@ export default function Profile() {
                 alt={album.title}
                 className="aspect-square w-full object-cover"
               />
-              <div className="p-4">
-               <h3 className="font-semibold">{album.title}</h3>
-               <p className="text-sm text-zinc-400 mt-1">{album.artist}</p>
-               <p className="mt-3 font-bold text-blue-400">Your rating: {album.rating}</p>
+              <div className="p-4 flex justify-between items-center">
+                <div className="">
+                  <h3 className="font-semibold">{album.title}</h3>
+                  <p className="text-sm text-zinc-400 mt-1">{album.artist}</p>
+                </div>
+                <div className="aspect-square h-9">
+                  <p className="font-bold text-xl text-center">
+                    {album.rating}
+                  </p>
+                  <div className="w-full bg-slate-800 h-[4px]">
+                    <div className={`h-full bg-red-500/80`} style={{ width: `${album.rating}%`, backgroundColor: `${album.rating >= 70 ? `green` : album.rating < 30 ? `red` : "yellow"}` }}></div>
+                  </div>
+                </div>
               </div>
             </Link>
           ))}
