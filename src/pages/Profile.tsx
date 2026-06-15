@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { getProfile } from "../services/profile";
 
 interface RatedAlbum {
   id: string;
@@ -11,7 +12,8 @@ interface RatedAlbum {
 }
 
 export default function Profile() {
-  const [userEmail, setUserEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [albums, setAlbums] = useState<RatedAlbum[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +25,9 @@ export default function Profile() {
         } = await supabase.auth.getUser();
 
         if (!user) return;
-        setUserEmail(user.email ?? "");
+        const profile = await getProfile(user.id);
+        setUsername(profile.username);
+        setAvatarUrl(profile.avatar_url ?? "");
         const { data: ratings, error } = await supabase
           .from("ratings")
           .select("*")
@@ -60,11 +64,16 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-7xl px-4 py-10">
-        <h1 className="text-4xl font-bold mb-2">My Profile</h1>
-        <p className="text-zinc-400 mb-8">{userEmail}</p>
-        <h2 className="text-2xl font-semibold mb-6">
-          My Ratings ({albums.length})
-        </h2>
+        <img
+          src={avatarUrl || "https://placehold.co/200x200?text=Avatar"}
+          alt={username}
+          className="h-24 w-24 rounded-full object-cover border border-slate-700"
+        />
+
+        <div>
+          <h1 className="text-4xl font-bold">@{username}</h1>
+          <p className="text-zinc-400">{albums.length} ratings</p>
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           {albums.map((album) => (
             <Link
@@ -87,7 +96,13 @@ export default function Profile() {
                     {album.rating}
                   </p>
                   <div className="w-full bg-slate-800 h-[4px]">
-                    <div className={`h-full bg-red-500/80`} style={{ width: `${album.rating}%`, backgroundColor: `${album.rating >= 70 ? `green` : album.rating < 30 ? `red` : "yellow"}` }}></div>
+                    <div
+                      className={`h-full bg-red-500/80`}
+                      style={{
+                        width: `${album.rating}%`,
+                        backgroundColor: `${album.rating >= 70 ? `green` : album.rating < 30 ? `red` : "yellow"}`,
+                      }}
+                    ></div>
                   </div>
                 </div>
               </div>

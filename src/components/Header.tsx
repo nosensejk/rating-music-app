@@ -1,37 +1,67 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { type User } from "@supabase/supabase-js";
 import { signInWithGoogle } from "../services/auth";
+import { hasProfile, getProfile } from "../services/profile";
 
 export default function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-   const searchRef = useRef<HTMLDivElement>(null);
-  
-    useEffect(() => {
-      function handleClickOutside(e: MouseEvent) {
-        if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-          setIsProfileOpen(false);
-        }
-      }
-  
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    });
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const searchRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  async function checkProfile(userId: string) {
+    const exists = await hasProfile(userId);
+
+    if (!exists) {
+      navigate("/setup-profile");
+    }
+  }
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        const profile = await getProfile(user.id);
+        setUsername(profile.username);
+        setAvatarUrl(profile.avatar_url ?? "");
+      }
+    }
+
+    loadUser();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        checkProfile(session.user.id);
+        const profile = await getProfile(session.user.id);
+        setUsername(profile.username);
+      } else {
+        setUsername("User");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -49,11 +79,17 @@ export default function Header() {
         </Link>
         <div className="flex justify-between items-center gap-3">
           {user ? (
-            <div
-              className="relative" ref={searchRef}
-            >
-              <button className="text-zinc-300 transition hover:text-white cursor-pointer" onMouseDown={() => setIsProfileOpen(!isProfileOpen)}>
-                Profile
+            <div className="relative" ref={searchRef}>
+              <button
+                className="text-zinc-300 transition hover:text-white cursor-pointer flex items-center gap-2"
+                onMouseDown={() => setIsProfileOpen(!isProfileOpen)}
+              >
+                <img
+                  src={avatarUrl || "https://placehold.co/200x200?text=Avatar"}
+                  alt={username}
+                  className="h-10 w-10 rounded-full object-cover border border-slate-700"
+                />
+                @{username}
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 w-40 rounded-md border border-slate-700 bg-slate-800 shadow-xl">
@@ -62,6 +98,12 @@ export default function Header() {
                     className="block w-full rounded px-3 py-2 text-left text-white hover:bg-slate-700"
                   >
                     Profile
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="block w-full rounded px-3 py-2 text-left text-white hover:bg-slate-700"
+                  >
+                    Settings
                   </Link>
                   <button
                     onClick={handleLogout}
