@@ -44,7 +44,7 @@ async function searchArtists(query: string, signal?: AbortSignal) {
 
 export async function getArtist(artistId: string) {
   const response = await fetch(
-    `https://musicbrainz.org/ws/2/artist/${artistId}?fmt=json`
+    `https://musicbrainz.org/ws/2/artist/${artistId}?fmt=json`,
   );
 
   const data = await response.json();
@@ -62,7 +62,6 @@ export async function getArtistAlbums(artistId: string): Promise<Album[]> {
 
   const data = await response.json();
 
-  
   return data["release-groups"].map((album: MusicBrainzAlbum) => ({
     id: album.id,
     title: album.title,
@@ -72,8 +71,6 @@ export async function getArtistAlbums(artistId: string): Promise<Album[]> {
     type: album["primary-type"] ?? "Unknown",
     secondaryTypes: album["secondary-types"] ?? [],
   }));
-
-  
 }
 
 export async function searchAlbums(
@@ -111,6 +108,7 @@ export async function getAlbumDetails(
     `https://musicbrainz.org/ws/2/release-group/${releaseGroupId}?inc=releases+artist-credits&fmt=json`,
   );
   const releasesData = await releasesResponse.json();
+
   const release = releasesData.releases?.[0];
 
   if (!release) {
@@ -126,17 +124,27 @@ export async function getAlbumDetails(
   return {
     id: releaseGroupId,
     title: releaseData.title,
-    type: releaseData["primaty-type"] ?? "Unknown",
+    type: releaseData["primary-type"] ?? "Unknown",
     secondaryTypes: releaseData["secondary-types"] ?? [],
     artist: releaseData["artist-credit"]?.[0]?.name || "Unknown",
     artistId: releaseData["artist-credit"]?.[0]?.artist?.id || "",
     year: releaseData.date?.split("-")[0] || "Unknown",
     coverUrl: `https://coverartarchive.org/release-group/${releaseGroupId}/front`,
     tracks:
-      releaseData.media?.[0]?.tracks?.map(
-        (track: { title: string; length?: number }) => ({
-          title: track.title,
-          length: formatTrackLength(track.length),
+      releaseData.media?.map(
+        (medium: {
+          title?: string;
+          tracks?: {
+            title: string;
+            length?: number;
+          }[];
+        }) => ({
+          title: medium.title || "",
+          tracks:
+            medium.tracks?.map((track) => ({
+              title: track.title,
+              length: formatTrackLength(track.length),
+            })) ?? [],
         }),
       ) || [],
   };

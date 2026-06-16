@@ -30,7 +30,12 @@ export default function ArtistPage() {
         const data = await getArtistAlbums(id);
         const artist = await getArtist(id);
 
-        data.sort((a, b) => Number(a.year) - Number(b.year));
+        data.sort((a, b) => {
+          const yearA = parseInt(a.year) || 0;
+          const yearB = parseInt(b.year) || 0;
+
+          return yearB - yearA;
+        });
         setAlbums(data);
         setArtist(artist.name);
       } catch (error) {

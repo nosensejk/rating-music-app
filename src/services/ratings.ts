@@ -120,7 +120,7 @@ export async function getTopAlbums(): Promise<TopAlbum[]> {
 
     const albums = Array.from(grouped.values()).map((album) => ({
       ...album, avg_rating: album.avg_rating / album.ratings_count,
-    })).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 20);
+    })).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 10);
 
     return albums;
 }

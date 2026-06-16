@@ -13,7 +13,11 @@ export interface Track {
    title: string;
    length: string;
 }
+export interface TrackGroup {
+   title: string;
+   tracks: Track[];
+}
 
 export interface AlbumDetails extends Album {
-   tracks: Track[];
+   tracks: TrackGroup[];
 }

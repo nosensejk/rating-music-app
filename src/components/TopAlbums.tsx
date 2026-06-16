@@ -28,7 +28,7 @@ export default function TopAlbums() {
   return (
     <section>
       <h2 className="mb-8 text-3xl font-bold">Top Rated Albums</h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-6 sm:grid-cols-3 lg:grid-cols-5">
         {albums.map((album) => (
           <Link
             key={album.album_id}

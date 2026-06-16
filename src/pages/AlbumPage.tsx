@@ -22,6 +22,8 @@ export default function AlbumPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  let trackNumber = 1;
+
   useEffect(() => {
     async function loadPage() {
       if (!id) return;
@@ -61,12 +63,12 @@ export default function AlbumPage() {
       </div>
     );
   }
-
+ 
   return (
     <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-6xl p-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-start">
-          <div>
+          <div className="shrink-0">
             <img
               src={album.coverUrl}
               alt={album.title}
@@ -168,23 +170,38 @@ export default function AlbumPage() {
             </div>
           </div>
 
-          <div>
+          <div className="flex-1">
             <h1 className="text-5xl font-bold">{album.title}</h1>
 
-            <Link to={`/artist/${album.artistId}`} className="size-fit mt-2 block text-xl hover:underline">{album.artist}</Link>
+            <Link
+              to={`/artist/${album.artistId}`}
+              className="size-fit mt-2 block text-xl hover:underline"
+            >
+              {album.artist}
+            </Link>
 
             <p className="mt-2 text-slate-400">{album.year}</p>
 
             <h2 className="mt-8 mb-4 text-2xl font-semibold">Tracklist</h2>
 
             <ol className="space-y-2">
-              {album.tracks.map((track, index) => (
-                <li key={index} className="flex items-center justify-between rounded bg-slate-700 px-4 py-3">
-                  <span>
-                    {index + 1}. {track.title}
-                  </span>
-                  <span className="text-slate-400 text-sm">{track.length}</span>
-                </li>
+              {album.tracks.map((group, groupIndex) => (
+                <div key={groupIndex} className="mb-8">
+                  {group.title && (
+                    <h3 className="mb-3 text-lg font-bold uppercase text-zinc-300">
+                      {group.title}
+                    </h3>
+                  )}
+                  {group.tracks.map((track, trackIndex) => (
+                    <div key={trackIndex} className="flex items-center justify-between border-b border-slate-700 py-2">
+                      <div className="flex gap-3">
+                        <span className="text-zinc-500">{trackNumber++}</span>
+                        <span>{track.title}</span>
+                      </div>
+                      <span className="text-zinc-400">{track.length}</span>
+                    </div>
+                  ))}
+                </div>
               ))}
             </ol>
           </div>
