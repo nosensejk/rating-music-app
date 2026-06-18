@@ -18,8 +18,7 @@ export async function getAlbumCover(
     const data = await response.json();
 
     const image = data.album?.image?.find(
-      (img: { size: string; ["#text"]: string }) =>
-        img.size === "mega",
+      (img: { size: string; ["#text"]: string }) => img.size === "mega",
     )?.["#text"];
 
     return image || null;
@@ -27,3 +26,5 @@ export async function getAlbumCover(
     return null;
   }
 }
+
+

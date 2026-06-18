@@ -20,6 +20,7 @@ export default function AlbumCard({ album }: AlbumCardProps) {
             src={album.coverUrl}
             alt={album.title}
             className="h-full w-full object-cover"
+            loading="lazy"
             onError={() => setImageError(true)}
           />
         ) : (

@@ -23,7 +23,7 @@ export default function SearchBar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(async () => {

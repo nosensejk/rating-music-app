@@ -51,7 +51,7 @@ export default function Profile() {
       }
     }
     loadProfile();
-  });
+  }, []);
 
   if (loading) {
     return (
@@ -87,6 +87,7 @@ export default function Profile() {
               <img
                 src={album.coverUrl}
                 alt={album.title}
+                loading="lazy"
                 className="aspect-square w-full object-cover"
               />
               <div className="p-4 flex justify-between items-center gap-3">

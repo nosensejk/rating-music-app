@@ -6,7 +6,7 @@ interface MusicBrainzAlbum {
   id: string;
   title: string;
   "primary-type"?: string;
-  "secondary-types"?: string;
+  "secondary-types"?: string[];
   "artist-credit"?: {
     name: string;
     artist?: {

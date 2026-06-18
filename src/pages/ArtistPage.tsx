@@ -2,12 +2,17 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getArtistAlbums, getArtist } from "../services/musicBrainz";
 import { type Album } from "../types/album";
+import { supabase } from "../lib/supabase";
 
 type FilterType = "Album" | "EP" | "Single" | "Compilation" | "All";
 
+type RatedAlbum = Album & {
+  rating: number;
+};
+
 export default function ArtistPage() {
   const { id } = useParams();
-  const [albums, setAlbums] = useState<Album[]>([]);
+  const [albums, setAlbums] = useState<RatedAlbum[]>([]);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [artist, setArtist] = useState(null);
@@ -26,18 +31,36 @@ export default function ArtistPage() {
 
   useEffect(() => {
     async function load() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!id) return;
-      try {
-        const data = await getArtistAlbums(id);
-        const artist = await getArtist(id);
 
-        data.sort((a, b) => {
+      setLoading(true);
+      try {
+        const [data, artist, ratingsResponse] = await Promise.all([
+          getArtistAlbums(id),
+          getArtist(id),
+          supabase.from("ratings").select("*").eq("user_id", user?.id),
+        ]);
+        const ratings = ratingsResponse.data ?? [];
+
+        const albumsWithRatings = data.map((album) => {
+          const rating = ratings.find((r) => r.album_id === album.id);
+
+          return {
+            ...album,
+            rating: rating?.rating ?? 0,
+          };
+        });
+
+        albumsWithRatings.sort((a, b) => {
           const yearA = parseInt(a.year) || 0;
           const yearB = parseInt(b.year) || 0;
 
           return yearB - yearA;
         });
-        setAlbums(data);
+        setAlbums(albumsWithRatings);
         setArtist(artist.name);
       } catch (error) {
         console.error(error);
@@ -70,9 +93,7 @@ export default function ArtistPage() {
     }
   });
 
-  console.log(filteredAlbums);
-
-  const getCountByType = (type: string, albums: Album[]) => {
+  const getCountByType = (type: string, albums: RatedAlbum[]) => {
     return albums.filter((album) => {
       const secondaryTypes = album.secondaryTypes ?? [];
 
@@ -96,13 +117,75 @@ export default function ArtistPage() {
     }).length;
   };
 
+  const averageRating = () => {
+    const ratedAlbums = albums.filter((album) => {
+      const secondaryTypes = album.secondaryTypes ?? [];
+
+      return (
+        (album.type === "Album" || album.type === "EP") &&
+        !secondaryTypes.includes("Compilation") &&
+        album.rating > 0
+      );
+    });
+
+    if (ratedAlbums.length === 0) return 0;
+
+    const sum = ratedAlbums.reduce((acc, album) => acc + album.rating, 0);
+
+    return Number(sum / ratedAlbums.length);
+  };
+
+  const avg = averageRating();
+  const ratingsCount = albums.filter(
+    (a) => (a.type === "Album" || a.type === "EP") && a.rating > 0,
+  ).length;
+
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="min-h-screen text-black flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-6xl p-8">
-      <h1 className="mb-8 text-4xl font-bold">{artist}</h1>
+      <div className="mb-8 w-fit flex items-center gap-6 bg-slate-700 p-4 rounded-lg">
+        <h1 className="text-4xl font-bold text-zinc-200">{artist}</h1>
+
+        {avg ? (
+          <div className="w-fit flex flex-col items-center gap-2 p-2 rounded-lg border-l-zinc-200">
+            <div className="text-s text-slate-400 mt-1">USER SCORE</div>
+            <div className="flex items-center gap-3">
+              <div className="aspect-square h-13">
+                <p
+                  className="font-bold text-3xl text-center text-zinc-200"
+                  title={avg.toFixed(1)}
+                >
+                  {avg.toFixed(0)}
+                </p>
+                <div className="w-full bg-slate-800 h-[4px]">
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${avg}%`,
+                      backgroundColor: `${avg >= 70 ? `green` : avg < 30 ? `red` : "yellow"}`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <span className="text-s text-slate-400">
+                Based on{" "}
+                <span className="font-semibold text-white">{ratingsCount}</span>{" "}
+                rating{ratingsCount === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-zinc-200 bg-slate-700 p-4 rounded-lg">No ratings yet</span>
+        )}
+      </div>
+
       <div className="mb-8 flex flex-wrap gap-2">
         {tabs.map((tab) => (
           <button
@@ -127,6 +210,7 @@ export default function ArtistPage() {
                   src={album.coverUrl}
                   alt={album.title}
                   className="h-full w-full object-cover"
+                  loading="lazy"
                   onError={() => {
                     setBrokenImages((prev) => new Set(prev).add(album.id));
                   }}

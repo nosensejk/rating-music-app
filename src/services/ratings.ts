@@ -14,7 +14,7 @@ export async function rateAlbum(
   rating: number,
   albumTitle: string,
   artistName: string,
-  coveUrl: string,
+  coverUrl: string,
 ) {
   if (rating < 0 || rating > 100) {
     throw new Error("Rating must be between 0 and 100");
@@ -30,7 +30,7 @@ export async function rateAlbum(
       album_id: albumId,
       album_title: albumTitle,
       artist_name: artistName,
-      cover_url: coveUrl,
+      cover_url: coverUrl,
       rating,
     },
     { onConflict: "user_id,album_id" },
