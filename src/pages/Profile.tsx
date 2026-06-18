@@ -64,16 +64,19 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-7xl px-4 py-10">
-        <img
-          src={avatarUrl || "https://placehold.co/200x200?text=Avatar"}
-          alt={username}
-          className="h-24 w-24 rounded-full object-cover border border-slate-700"
-        />
+        <div className="flex gap-3 mb-5">
+          <img
+            src={avatarUrl || "https://placehold.co/200x200?text=Avatar"}
+            alt={username}
+            className="h-24 w-24 rounded-full object-cover border border-slate-700"
+          />
 
-        <div>
-          <h1 className="text-4xl font-bold">@{username}</h1>
-          <p className="text-zinc-400">{albums.length} ratings</p>
+          <div className="flex flex-col justify-evenly">
+            <h1 className="text-4xl font-bold">@{username}</h1>
+            <p className="text-zinc-400">{albums.length} ratings</p>
+          </div>
         </div>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           {albums.map((album) => (
             <Link
@@ -86,10 +89,17 @@ export default function Profile() {
                 alt={album.title}
                 className="aspect-square w-full object-cover"
               />
-              <div className="p-4 flex justify-between items-center">
-                <div className="">
-                  <h3 className="font-semibold">{album.title}</h3>
-                  <p className="text-sm text-zinc-400 mt-1">{album.artist}</p>
+              <div className="p-4 flex justify-between items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold truncate" title={album.title}>
+                    {album.title}
+                  </h3>
+                  <p
+                    className="text-sm text-zinc-400 mt-1 truncate"
+                    title={album.artist}
+                  >
+                    {album.artist}
+                  </p>
                 </div>
                 <div className="aspect-square h-9">
                   <p className="font-bold text-xl text-center">

@@ -8,6 +8,7 @@ type FilterType = "Album" | "EP" | "Single" | "Compilation" | "All";
 export default function ArtistPage() {
   const { id } = useParams();
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [artist, setArtist] = useState(null);
   const [filter, setFilter] = useState<FilterType>("Album");
@@ -118,15 +119,30 @@ export default function ArtistPage() {
           <Link
             key={album.id}
             to={`/album/${album.id}`}
-            className="overflow-hidden rounded-xl border border-slate-600 bg-slate-700 transition hover:border-slate-500 hover:scale-[1.03]"
+            className="overflow-hidden rounded-xl border border-slate-600 bg-slate-700 transition hover:border-slate-500"
           >
-            <img
-              src={album.coverUrl}
-              alt={album.title}
-              className="aspect-square w-full object-cover"
-            />
+            <div className="aspect-square overflow-hidden bg-slate-700">
+              {album.coverUrl && !brokenImages.has(album.id) ? (
+                <img
+                  src={album.coverUrl}
+                  alt={album.title}
+                  className="h-full w-full object-cover"
+                  onError={() => {
+                    setBrokenImages((prev) => new Set(prev).add(album.id));
+                  }}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center text-slate-300">
+                    <div className="mt-2 text-sm">No Cover</div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="p-4">
-              <h3 className="line-clamp-2 font-semibold">{album.title}</h3>
+              <h3 className="line-clamp-2 font-semibold text-zinc-200">
+                {album.title}
+              </h3>
 
               <span className="text-slate-400">{album.year}</span>
             </div>

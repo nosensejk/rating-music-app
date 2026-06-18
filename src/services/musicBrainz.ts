@@ -1,4 +1,6 @@
 import { type Album, type AlbumDetails } from "../types/album";
+import { type SearchResult } from "../types/search";
+import { getAlbumCover } from "./lastfm";
 
 interface MusicBrainzAlbum {
   id: string;
@@ -57,30 +59,51 @@ export async function getArtist(artistId: string) {
 
 export async function getArtistAlbums(artistId: string): Promise<Album[]> {
   const response = await fetch(
-    `https://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&limit=100`,
+    `https://musicbrainz.org/ws/2/release-group?artist=${artistId}&fmt=json&limit=100&inc=artist-credits`,
   );
 
   const data = await response.json();
+  
 
-  return data["release-groups"].map((album: MusicBrainzAlbum) => ({
-    id: album.id,
-    title: album.title,
-    artistId: album["artist-credit"]?.[0]?.artist?.id || artistId,
-    year: album["first-release-date"]?.split("-")[0] || "Unknown",
-    coverUrl: `https://coverartarchive.org/release-group/${album.id}/front`,
-    type: album["primary-type"] ?? "Unknown",
-    secondaryTypes: album["secondary-types"] ?? [],
-  }));
+  return Promise.all(
+    data["release-groups"].map(async (album: MusicBrainzAlbum) => {
+      const artist = album["artist-credit"]?.[0]?.name || "";
+      
+      const coverUrl =
+        (await getAlbumCover(artist, album.title)) ??
+        `https://coverartarchive.org/release-group/${album.id}/front`;
+
+      return {
+        id: album.id,
+        title: album.title,
+        artist,
+        artistId: album["artist-credit"]?.[0]?.artist?.id || artistId,
+        year: album["first-release-date"]?.split("-")[0] || "Unknown",
+        coverUrl,
+        type: album["primary-type"] ?? "Unknown",
+        secondaryTypes: album["secondary-types"] ?? [],
+      };
+    }),
+  );
 }
 
 export async function searchAlbums(
   query: string,
   signal?: AbortSignal,
-): Promise<Album[]> {
+): Promise<SearchResult> {
   const safeQuery = sanitizeQuery(query);
   const artists = await searchArtists(safeQuery, signal);
+
   if (artists.length > 0) {
-    return getArtistAlbums(artists[0].id);
+    const releases = await getArtistAlbums(artists[0].id);
+
+    return {
+      artist: {
+        id: artists[0].id,
+        name: artists[0].name,
+      },
+      releases,
+    };
   }
   const response = await fetch(
     `https://musicbrainz.org/ws/2/release-group?query=${encodeURIComponent(
@@ -91,14 +114,21 @@ export async function searchAlbums(
 
   const data = await response.json();
 
-  return data["release-groups"].map((album: MusicBrainzAlbum) => ({
+  const releases = data["release-groups"].map((album: MusicBrainzAlbum) => ({
     id: album.id,
     title: album.title,
     artist: album["artist-credit"]?.[0]?.name || "Unknown",
     artistId: album["artist-credit"]?.[0]?.artist?.id || "",
     year: album["first-release-date"]?.split("-")[0] || "Unknown",
     coverUrl: `https://coverartarchive.org/release-group/${album.id}/front`,
+    type: album["primary-type"] ?? "Unknown",
+    secondaryTypes: album["secondary-types"] ?? [],
   }));
+
+  return {
+    artist: null,
+    releases,
+  };
 }
 
 export async function getAlbumDetails(
@@ -109,7 +139,17 @@ export async function getAlbumDetails(
   );
   const releasesData = await releasesResponse.json();
 
-  const release = releasesData.releases?.[0];
+  const releases = releasesData.releases ?? [];
+  console.log(releases);
+  
+
+  const release =
+    releases.find(
+      (r: { country?: string; status?: string }) =>
+        r.country === "XW" && r.status === "Official",
+    ) ||
+    releases.find((r: { status?: string }) => r.status === "Official") ||
+    releases[0];
 
   if (!release) {
     throw new Error("Release not found");
@@ -121,6 +161,13 @@ export async function getAlbumDetails(
 
   const releaseData = await releaseResponse.json();
 
+  const artist = releaseData["artist-credit"]?.[0]?.name || "Unknown";
+
+  const lastFmCover = await getAlbumCover(artist, releaseData.title);
+  const coverUrl = lastFmCover
+    ? lastFmCover
+    : `https://coverartarchive.org/release-group/${releaseGroupId}/front`;
+
   return {
     id: releaseGroupId,
     title: releaseData.title,
@@ -129,7 +176,7 @@ export async function getAlbumDetails(
     artist: releaseData["artist-credit"]?.[0]?.name || "Unknown",
     artistId: releaseData["artist-credit"]?.[0]?.artist?.id || "",
     year: releaseData.date?.split("-")[0] || "Unknown",
-    coverUrl: `https://coverartarchive.org/release-group/${releaseGroupId}/front`,
+    coverUrl,
     tracks:
       releaseData.media?.map(
         (medium: {

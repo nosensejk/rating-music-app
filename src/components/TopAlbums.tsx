@@ -41,10 +41,10 @@ export default function TopAlbums() {
               className="aspect-square w-full object-cover"
             />
             <div className="p-4 text-white">
-              <h3 className="line-clamp-2 font-semibold">
+              <h3 className="line-clamp-2 font-semibold truncate" title={album.album_title}>
                 {album.album_title}
               </h3>
-              <p className="mt-1 text-sm text-slate-300">{album.artist_name}</p>
+              <p className="mt-1 text-sm text-slate-300 truncate" title={album.artist_name}>{album.artist_name}</p>
               <div className="mt-3 flex items-center gap-2">
                 <div className="aspect-square h-9">
                   <p className="font-bold text-xl text-center">

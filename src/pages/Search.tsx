@@ -14,7 +14,7 @@ export default function Search() {
     async function load() {
       try {
         const results = await searchAlbums(query);
-        setAlbums(results);
+        setAlbums(results.releases);
       } finally {
         setLoading(false);
       }
@@ -29,8 +29,8 @@ export default function Search() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-8 bg-slate-800">
-      <h1 className="mb-6 text-3xl font-bold text-white">
+    <div className="mx-auto max-w-6xl p-8">
+      <h1 className="mb-6 text-3xl font-bold text-black">
         Search results for "{query}"
       </h1>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
