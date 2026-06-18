@@ -87,9 +87,9 @@ export default function Header() {
                 <img
                   src={avatarUrl || "https://placehold.co/200x200?text=Avatar"}
                   alt={username}
-                  className="h-10 w-10 rounded-full object-cover border border-slate-700"
+                  className="h-10 w-10 rounded-full object-cover border border-slate-700 "
                 />
-                @{username}
+                <p className="max-sm:hidden">@{username}</p>
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 w-40 rounded-md border border-slate-700 bg-slate-800 shadow-xl">

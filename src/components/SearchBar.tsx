@@ -59,7 +59,7 @@ export default function SearchBar() {
     .slice(0, Math.max(0, 6 - usedSlots));
 
   return (
-    <div ref={searchRef} className="relative w-80">
+    <div ref={searchRef} className="relative w-80 max-sm:w-40">
       <input
         type="text"
         value={query}
