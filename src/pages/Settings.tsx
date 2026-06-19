@@ -24,9 +24,11 @@ export default function Settings() {
 
       const profile = await getProfile(user.id);
 
-      setUsername(profile.username ?? "");
-      setNewUsername(profile.username ?? "");
-      setAvatarUrl(profile.avatar_url ?? "");
+      if (profile) {
+        setUsername(profile.username ?? "");
+        setAvatarUrl(profile.avatar_url ?? "");
+        setNewUsername(profile?.username ?? "");
+      }
     }
 
     loadProfile();
@@ -60,7 +62,7 @@ export default function Settings() {
         return;
       }
 
-      navigate("/");
+      navigate(`/u/${username}`);
     } finally {
       setLoading(false);
     }
@@ -74,15 +76,41 @@ export default function Settings() {
       } = await supabase.auth.getUser();
 
       if (!user) return;
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}.${fileExt}`;
-      const { error } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, {
-          upsert: true,
-        });
 
-      if (error) throw error;
+      const { data: files, error: listError } = await supabase.storage
+        .from("avatars")
+        .list();
+
+      if (listError) throw listError;
+
+      const userFiles =
+        files?.filter((file) => file.name.startsWith(user.id)) ?? [];
+
+      const { data: removeData, error: removeError } = await supabase.storage
+        .from("avatars")
+        .remove(userFiles.map((file) => file.name));
+
+      console.log("DELETE DATA:", removeData);
+      console.log("DELETE ERROR:", removeError);
+
+      if (userFiles.length > 0) {
+        const { error: deleteError } = await supabase.storage
+          .from("avatars")
+          .remove(userFiles.map((file) => file.name));
+
+        if (deleteError) {
+          console.error(deleteError);
+        }
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
@@ -123,7 +151,7 @@ export default function Settings() {
           <p className="mt-2 text-sm text-zinc-400">Uploading...</p>
         )}
       </div>
-      <hr className="mb-2 border-slate-400"/>
+      <hr className="mb-2 border-slate-400" />
       <div className="mb-6">
         <p className="mb-1 text-xs font-bold uppercase text-zinc-400">
           Username
@@ -170,7 +198,7 @@ export default function Settings() {
           </div>
         )}
       </div>
-      <hr className="mb-2 border-slate-400"/>
+      <hr className="mb-2 border-slate-400" />
       <button
         onClick={handleSubmit}
         disabled={loading}

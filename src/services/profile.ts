@@ -14,8 +14,16 @@ export async function getProfile(userId: string) {
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  return data;
+}
+
+export async function getProfileByUsername(username: string) {
+  const { data, error } = await supabase.from("profiles").select("*").eq("username", username).maybeSingle();
+
+  if (error) throw error;
+
   return data;
 }

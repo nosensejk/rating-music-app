@@ -31,7 +31,7 @@ export default function Header() {
     const exists = await hasProfile(userId);
 
     if (!exists) {
-      navigate("/setup-profile");
+      navigate("/settings");
     }
   }
 
@@ -94,7 +94,7 @@ export default function Header() {
               {isProfileOpen && (
                 <div className="absolute right-0 w-40 rounded-md border border-slate-700 bg-slate-800 shadow-xl">
                   <Link
-                    to="/profile"
+                    to={`/u/${username}`}
                     className="block w-full rounded px-3 py-2 text-left text-white hover:bg-slate-700"
                   >
                     Profile
