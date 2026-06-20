@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getProfile } from "../services/profile";
 import { FiEdit2 } from "react-icons/fi";
+import { isUsernameTaken } from "../services/profile";
 
 export default function Settings() {
   const [username, setUsername] = useState("");
@@ -23,6 +24,13 @@ export default function Settings() {
       if (!user) return;
 
       const profile = await getProfile(user.id);
+
+      if (username !== profile?.username && 
+        (await isUsernameTaken(username))
+      ) {
+        alert("This username is already taken");
+        return;
+      }
 
       if (profile) {
         setUsername(profile.username ?? "");
