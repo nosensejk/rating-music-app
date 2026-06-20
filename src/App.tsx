@@ -7,6 +7,7 @@ import Search from './pages/Search'
 import ArtistPage from './pages/ArtistPage'
 import Settings from './pages/Settings'
 import UserProfile from './pages/UserProfile'
+import { Footer } from './components/Footer'
 
 function App() {
 
@@ -22,6 +23,7 @@ function App() {
         <Route path='/settings' element={<Settings/>}/>
         <Route path='/u/:username' element={<UserProfile/>}/>
       </Routes>
+      <Footer/>
     </BrowserRouter>
   )
 }
