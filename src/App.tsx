@@ -8,6 +8,7 @@ import ArtistPage from "./pages/ArtistPage";
 import Settings from "./pages/Settings";
 import UserProfile from "./pages/UserProfile";
 import { Footer } from "./components/Footer";
+import AlbumRatings from "./pages/AlbumRatings";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/artist/:id" element={<ArtistPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/u/:username" element={<UserProfile />} />
+            <Route path="/album/:id/ratings" element={<AlbumRatings />} />
           </Routes>
         </main>
         <Footer />

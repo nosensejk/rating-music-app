@@ -17,6 +17,9 @@ export default function ArtistPage() {
   const [loading, setLoading] = useState(false);
   const [artist, setArtist] = useState(null);
   const [filter, setFilter] = useState<FilterType>("Album");
+  const [allRatings, setAllRatings] = useState<
+    { album_id: string; rating: number }[]
+  >([]);
 
   const tabs: {
     value: FilterType;
@@ -31,26 +34,40 @@ export default function ArtistPage() {
 
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!id) return;
 
       setLoading(true);
       try {
-        const [data, artist, ratingsResponse] = await Promise.all([
+        const [data, artist] = await Promise.all([
           getArtistAlbums(id),
           getArtist(id),
-          supabase.from("ratings").select("*").eq("user_id", user?.id),
         ]);
-        const ratings = ratingsResponse.data ?? [];
+
+        const albumIds = data.map((album) => album.id);
+
+        const { data: ratings, error } = await supabase
+          .from("ratings")
+          .select("album_id, rating")
+          .in("album_id", albumIds);
+
+        console.log(ratings);
+        setAllRatings(ratings ?? []);
+
+        if (error) throw error;
 
         const albumsWithRatings = data.map((album) => {
-          const rating = ratings.find((r) => r.album_id === album.id);
+          const albumRatings =
+            ratings?.filter((r) => r.album_id === album.id) ?? [];
+
+          const averageRating =
+            albumRatings.length > 0
+              ? albumRatings.reduce((sum, r) => sum + r.rating, 0) /
+                albumRatings.length
+              : 0;
 
           return {
             ...album,
-            rating: rating?.rating ?? 0,
+            rating: averageRating,
           };
         });
 
@@ -60,6 +77,7 @@ export default function ArtistPage() {
 
           return yearB - yearA;
         });
+
         setAlbums(albumsWithRatings);
         setArtist(artist.name);
       } catch (error) {
@@ -118,26 +136,39 @@ export default function ArtistPage() {
   };
 
   const averageRating = () => {
-    const ratedAlbums = albums.filter((album) => {
-      const secondaryTypes = album.secondaryTypes ?? [];
+    const validAlbumIds = albums
+      .filter((album) => {
+        const secondaryTypes = album.secondaryTypes ?? [];
 
-      return (
-        (album.type === "Album" || album.type === "EP") &&
-        !secondaryTypes.includes("Compilation") &&
-        album.rating > 0
-      );
-    });
+        return (
+          (album.type === "Album" || album.type === "EP") &&
+          !secondaryTypes.includes("Compilation")
+        );
+      })
+      .map((album) => album.id);
 
-    if (ratedAlbums.length === 0) return 0;
+    const ratingsForArtist = allRatings.filter((rating) =>
+      validAlbumIds.includes(rating.album_id),
+    );
 
-    const sum = ratedAlbums.reduce((acc, album) => acc + album.rating, 0);
+    if (ratingsForArtist.length === 0) return 0;
 
-    return Number(sum / ratedAlbums.length);
+    const sum = ratingsForArtist.reduce(
+      (acc, rating) => acc + rating.rating,
+      0,
+    );
+
+    return sum / ratingsForArtist.length;
   };
 
   const avg = averageRating();
-  const ratingsCount = albums.filter(
-    (a) => (a.type === "Album" || a.type === "EP") && a.rating > 0,
+  const ratingsCount = allRatings.filter((rating) =>
+    albums.some(
+      (album) =>
+        album.id === rating.album_id &&
+        (album.type === "Album" || album.type === "EP") &&
+        !(album.secondaryTypes ?? []).includes("Compilation"),
+    ),
   ).length;
 
   if (loading) {
@@ -182,7 +213,9 @@ export default function ArtistPage() {
             </div>
           </div>
         ) : (
-          <span className="text-zinc-200 bg-slate-700 p-4 rounded-lg">No ratings yet</span>
+          <span className="text-zinc-200 bg-slate-700 p-4 rounded-lg">
+            No ratings yet
+          </span>
         )}
       </div>
 
@@ -224,7 +257,7 @@ export default function ArtistPage() {
               )}
             </div>
             <div className="p-4">
-              <h3 className="line-clamp-2 font-semibold text-zinc-200">
+              <h3 className="line-clamp-2 font-semibold text-zinc-200 truncate">
                 {album.title}
               </h3>
 

@@ -47,8 +47,8 @@ export default function TopAlbums() {
               <p className="mt-1 text-sm text-slate-300 truncate" title={album.artist_name}>{album.artist_name}</p>
               <div className="mt-3 flex items-center gap-2">
                 <div className="aspect-square h-9">
-                  <p className="font-bold text-xl text-center">
-                    {album.avg_rating}
+                  <p className="font-bold text-xl text-center" >
+                    {album.avg_rating.toFixed(0)}
                   </p>
                   <div className="w-full bg-slate-800 h-[4px]">
                     <div className={`h-full bg-red-500/80`} style={{ width: `${album.avg_rating}%`, backgroundColor: `${album.avg_rating >= 70 ? `green` : album.avg_rating < 30 ? `red` : "yellow"}` }}></div>
