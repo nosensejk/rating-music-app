@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { getAlbumDetails } from "../services/musicBrainz";
+import { type AlbumDetails } from "../types/album";
 
 interface AlbumRating {
   rating: number;
@@ -14,6 +16,7 @@ interface AlbumRating {
 export default function AlbumRatings() {
   const { id } = useParams();
 
+  const [album, setAlbum] = useState<AlbumDetails | null>(null);
   const [ratings, setRatings] = useState<AlbumRating[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,16 +25,30 @@ export default function AlbumRatings() {
       if (!id) return;
 
       try {
-        const { data, error } = await supabase
-          .from("ratings")
-          .select(`rating, created_at, profiles (username, avatar_url)`)
-          .eq("album_id", id)
-          .order("created_at", { ascending: false });
+        const [albumData, ratingsResponse] = await Promise.all([
+          getAlbumDetails(id),
+          supabase
+            .from("ratings")
+            .select(`rating, created_at, profiles (username, avatar_url)`)
+            .eq("album_id", id)
+            .order("created_at", { ascending: false }),
+        ]);
 
-        if (error) throw error;
+        setAlbum(albumData);
 
+        if (ratingsResponse.error) throw ratingsResponse.error;
 
-        setRatings(data);
+        const formattedRatings: AlbumRating[] = (
+          ratingsResponse.data ?? []
+        ).map((item) => ({
+          rating: item.rating,
+          created_at: item.created_at,
+          profiles: Array.isArray(item.profiles)
+            ? item.profiles[0]
+            : item.profiles,
+        }));
+
+        setRatings(formattedRatings);
       } catch (error) {
         console.error(error);
       } finally {
@@ -51,36 +68,71 @@ export default function AlbumRatings() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="mb-6 text-3xl font-bold text-white">Ratings</h1>
+    <div className="bg-slate-800 min-h-screen">
+      <div className="mx-auto max-w-6xl p-8">
+        <div className="mb-8 flex items-center gap-6">
+          <img
+            src={album?.coverUrl}
+            alt={album?.title}
+            className="h-32 w-32 rounded-md"
+          />
+          <div>
+            <Link to={`/album/${id}`} className="text-zinc-200 hover:underline">
+              <h1 className="text-3xl font-bold">
+                {album?.title}
+              </h1>
+            </Link>
 
-      <div className="space-y-4">
-        {ratings.map((rating, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800 p-4"
-          >
+            <p className="text-slate-400">{album?.artist}</p>
+            <p className="mt-2 text-sm text-slate-400">
+              {ratings.length} ratings
+            </p>
+          </div>
+        </div>
+        <hr className="mb-4 border-slate-400" />
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {ratings.map((rating, index) => (
             <Link
+              key={index}
               to={`/u/${rating.profiles.username}`}
-              className="flex items-center gap-3"
+              className="flex flex-col items-center text-center"
             >
+              <span className="mb-1 text-sm text-slate-400">
+                {new Date(rating.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+
               <img
                 src={
                   rating.profiles.avatar_url ||
                   "https://placehold.co/100x100?text=Avatar"
                 }
                 alt={rating.profiles.username}
-                className="h-12 w-12 rounded-full object-cover"
+                className="mb-1 h-20 w-20 rounded-full object-cover"
               />
-              <span className="font-semibold text-white">
-                @{rating.profiles.username}
+
+              <span className="mb-1 max-w-full truncate font-semibold text-zinc-200">
+                {rating.profiles.username}
               </span>
+
+              <span className="text-xl text-zinc-200 text-center">
+                {rating.rating}
+              </span>
+
+              <div className="w-9 bg-slate-800 h-[4px]">
+                <div
+                  className={`h-full bg-red-500/80`}
+                  style={{
+                    width: `${rating.rating}%`,
+                    backgroundColor: `${rating.rating >= 70 ? `green` : rating.rating < 30 ? `red` : "yellow"}`,
+                  }}
+                ></div>
+              </div>
             </Link>
-            <span className="text-2xl font-bold text-white">
-              {rating.rating}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

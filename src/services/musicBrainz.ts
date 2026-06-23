@@ -64,7 +64,6 @@ export async function getArtistAlbums(artistId: string): Promise<Album[]> {
 
   const data = await response.json();
   
-
   return Promise.all(
     data["release-groups"].map(async (album: MusicBrainzAlbum) => {
       const artist = album["artist-credit"]?.[0]?.name || "";

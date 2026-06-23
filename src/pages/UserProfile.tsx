@@ -9,7 +9,13 @@ interface RatedAlbum {
   artist: string;
   coverUrl: string;
   rating: number;
+  created_at: string;
 }
+
+type SortType =
+  | "rating-desc"
+  | "rating-asc"
+  | "rated-desc";
 
 export default function UserProfile() {
   const { username: profileUsername } = useParams();
@@ -17,6 +23,7 @@ export default function UserProfile() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [albums, setAlbums] = useState<RatedAlbum[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortType>("rated-desc");
 
   useEffect(() => {
     async function loadProfile() {
@@ -48,6 +55,7 @@ export default function UserProfile() {
             artist: rating.artist_name,
             coverUrl: rating.cover_url,
             rating: rating.rating,
+            created_at: rating.created_at,
           })) ?? [];
         setAlbums(ratedAlbums);
       } catch (error) {
@@ -57,7 +65,25 @@ export default function UserProfile() {
       }
     }
     loadProfile();
-  }, []);
+  }, [profileUsername]);
+
+  const sortedAlbums = [...albums].sort((a, b) => {
+    switch (sortBy) {
+      case "rating-desc":
+        return b.rating - a.rating;
+
+      case "rating-asc":
+        return a.rating - b.rating;
+
+      case "rated-desc":
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+      default:
+        return 0;
+    }
+  });
 
   if (loading) {
     return (
@@ -83,8 +109,20 @@ export default function UserProfile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-          {albums.map((album) => (
+        <div className="mb-6 flex justify-end">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortType)}
+            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white"
+          >
+            <option value="rated-desc">Recently Rated</option>
+            <option value="rating-desc">Highest Rated</option>
+            <option value="rating-asc">Lowest Rated</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-6">
+          {sortedAlbums.map((album) => (
             <Link
               key={album.id}
               to={`/album/${album.id}`}

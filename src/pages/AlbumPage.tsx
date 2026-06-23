@@ -10,7 +10,6 @@ import {
 } from "../services/ratings";
 import { supabase } from "../lib/supabase";
 
-
 export default function AlbumPage() {
   const { id } = useParams();
 
@@ -27,21 +26,19 @@ export default function AlbumPage() {
 
   let trackNumber = 1;
 
-  
-
   useEffect(() => {
     async function loadPage() {
       if (!id) return;
 
       try {
-        const [albumData, average, rating, ratingsResponse] = await Promise.all([
-          getAlbumDetails(id),
-          getAverageRating(id),
-          getUserRating(id),
-          supabase.from("ratings").select("id").eq("album_id", id),
-        ]);
-
-        
+        const [albumData, average, rating, ratingsResponse] = await Promise.all(
+          [
+            getAlbumDetails(id),
+            getAverageRating(id),
+            getUserRating(id),
+            supabase.from("ratings").select("id").eq("album_id", id),
+          ],
+        );
 
         setAlbum(albumData);
         setAvg(average);
@@ -72,7 +69,7 @@ export default function AlbumPage() {
       </div>
     );
   }
- 
+
   return (
     <div className="min-h-screen bg-slate-800 text-white">
       <div className="mx-auto max-w-6xl p-8">
@@ -88,8 +85,14 @@ export default function AlbumPage() {
               <h3 className="mb-3 text-xl font-semibold">Rating (0-100)</h3>
 
               <p className="mb-2 text-slate-300">
-                Average: {avg.toFixed(1)} / 100 <br/>
-                Based on <Link to={`/album/${id}/ratings`} className=" text-slate-400 hover:text-slate-200 hover:underline">{ratingsCount} ratings</Link>
+                Average: {avg.toFixed(1)} / 100 <br />
+                Based on{" "}
+                <Link
+                  to={`/album/${id}/ratings`}
+                  className=" text-slate-400 hover:text-slate-200 hover:underline"
+                >
+                  {ratingsCount} ratings
+                </Link>
               </p>
 
               <div className="mb-4 flex items-center gap-2">
@@ -203,7 +206,10 @@ export default function AlbumPage() {
                     </h3>
                   )}
                   {group.tracks.map((track, trackIndex) => (
-                    <div key={trackIndex} className="flex items-center justify-between border-b border-slate-700 py-2">
+                    <div
+                      key={trackIndex}
+                      className="flex items-center justify-between border-b border-slate-700 py-2"
+                    >
                       <div className="flex gap-3">
                         <span className="text-zinc-500">{trackNumber++}</span>
                         <span>{track.title}</span>
