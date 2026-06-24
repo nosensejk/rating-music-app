@@ -9,6 +9,7 @@ import Settings from "./pages/Settings";
 import UserProfile from "./pages/UserProfile";
 import { Footer } from "./components/Footer";
 import AlbumRatings from "./pages/AlbumRatings";
+import GenrePage from "./pages/GenrePage";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/u/:username" element={<UserProfile />} />
             <Route path="/album/:id/ratings" element={<AlbumRatings />} />
+            <Route path="/genre/:slug" element={<GenrePage />} />
           </Routes>
         </main>
         <Footer />

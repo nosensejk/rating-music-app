@@ -63,11 +63,11 @@ export async function getArtistAlbums(artistId: string): Promise<Album[]> {
   );
 
   const data = await response.json();
-  
+
   return Promise.all(
     data["release-groups"].map(async (album: MusicBrainzAlbum) => {
       const artist = album["artist-credit"]?.[0]?.name || "";
-      
+
       const coverUrl =
         (await getAlbumCover(artist, album.title)) ??
         `https://coverartarchive.org/release-group/${album.id}/front`;
@@ -139,8 +139,6 @@ export async function getAlbumDetails(
   const releasesData = await releasesResponse.json();
 
   const releases = releasesData.releases ?? [];
-  console.log(releases);
-  
 
   const release =
     releases.find(

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getArtistAlbums, getArtist } from "../services/musicBrainz";
 import { type Album } from "../types/album";
 import { supabase } from "../lib/supabase";
+import { getArtistTags } from "../services/lastfm";
 
 type FilterType = "Album" | "EP" | "Single" | "Compilation" | "All";
 
@@ -16,6 +17,7 @@ export default function ArtistPage() {
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [artist, setArtist] = useState(null);
+  const [genres, setGenres] = useState<string[]>([]);
   const [filter, setFilter] = useState<FilterType>("Album");
   const [allRatings, setAllRatings] = useState<
     { album_id: string; rating: number }[]
@@ -43,6 +45,7 @@ export default function ArtistPage() {
           getArtist(id),
         ]);
 
+        const tags = await getArtistTags(artist.name);
         const albumIds = data.map((album) => album.id);
 
         const { data: ratings, error } = await supabase
@@ -80,6 +83,7 @@ export default function ArtistPage() {
 
         setAlbums(albumsWithRatings);
         setArtist(artist.name);
+        setGenres(tags);
       } catch (error) {
         console.error(error);
       } finally {
@@ -217,6 +221,17 @@ export default function ArtistPage() {
             No ratings yet
           </span>
         )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {genres.map((genre) => (
+            <Link
+              key={genre}
+              to={`/genre/${genre.toLowerCase().replaceAll(" ", "-")}`}
+              className="rounded-full bg-slate-700 px-3 py-1 text-sm text-slate-200 hover:bg-slate-600"
+            >
+              {genre}
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">

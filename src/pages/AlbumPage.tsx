@@ -9,6 +9,7 @@ import {
   deleteRating,
 } from "../services/ratings";
 import { supabase } from "../lib/supabase";
+import { getAlbumTags } from "../services/lastfm";
 
 export default function AlbumPage() {
   const { id } = useParams();
@@ -20,6 +21,7 @@ export default function AlbumPage() {
   const [inputRating, setInputRating] = useState<string>("");
   const [ratingsCount, setRatingsCount] = useState(0);
   const [avg, setAvg] = useState(0);
+  const [genres, setGenres] = useState<string[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,10 +42,13 @@ export default function AlbumPage() {
           ],
         );
 
+        const tags = await getAlbumTags(albumData.artist, albumData.title);
+
         setAlbum(albumData);
         setAvg(average);
         setUserRating(rating);
         setRatingsCount(ratingsResponse.data?.length ?? 0);
+        setGenres(tags);
       } catch (error) {
         console.error(error);
       } finally {
@@ -180,6 +185,18 @@ export default function AlbumPage() {
                   </button>
                 </div>
               )}
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {genres.map((genre) => (
+                  <Link
+                    key={genre}
+                    to={`/genre/${genre.toLowerCase().replaceAll(" ", "-")}`}
+                    className="rounded-full bg-slate-700 px-3 py-1 text-sm text-slate-200 hover:bg-slate-600"
+                  >
+                    {genre}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 
