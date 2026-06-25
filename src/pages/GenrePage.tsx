@@ -1,11 +1,12 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getTopAlbumsByTag } from "../services/lastfm";
+import { type GenreAlbum } from "../services/musicBrainz";
 
 export default function GenrePage() {
   const { slug } = useParams();
 
-  const [albums, setAlbums] = useState<any[]>([]);
+  const [albums, setAlbums] = useState<GenreAlbum[]>([]);
   const [loading, setLoading] = useState(true);
 
   const genreName = slug
@@ -20,6 +21,8 @@ export default function GenrePage() {
       try {
         const albums = await getTopAlbumsByTag(slug);
         setAlbums(albums);
+        
+        
       } catch (error) {
         console.error(error);
       } finally {
@@ -44,8 +47,8 @@ export default function GenrePage() {
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:grid-cols-6">
           {albums.slice(0, 18).map((album) => (
             <Link
-              to={`/album/${album.mbid}`}
-              key={album.mbid}
+              to={`/album/${album.id}`}
+              key={album.id}
               className="overflow-hidden rounded-xl border border-slate-700"
             >
               <img
@@ -66,6 +69,7 @@ export default function GenrePage() {
                 >
                   {album.artist}
                 </p>
+                <p className="text-sm text-zinc-500">{album.year}</p>
               </div>
             </Link>
           ))}

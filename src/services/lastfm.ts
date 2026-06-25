@@ -1,6 +1,7 @@
+import { type GenreAlbum } from "./musicBrainz";
+
 interface LastFmTopAlbum {
   name: string;
-  mbid: string;
   artist: {
     name: string;
   };
@@ -76,7 +77,7 @@ export async function getArtistTags(artist: string): Promise<string[]> {
   );
 }
 
-export async function getTopAlbumsByTag(tag: string) {
+export async function getTopAlbumsByTag(tag: string): Promise<GenreAlbum[]> {
   const response = await fetch(
     `https://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=${encodeURIComponent(
       tag,
@@ -84,17 +85,39 @@ export async function getTopAlbumsByTag(tag: string) {
   );
 
   const data = await response.json();
-  console.log(data.albums.album[0])
-  
 
-  return (
-    data.albums?.album?.map((album: LastFmTopAlbum) => ({
-      title: album.name,
-      artist: album.artist.name,
-      mbid: album.mbid,
-      image: album.image?.find(
-        (img: {size: string}) => img.size === "large",
-      )?.["#text"] ?? "",
-    })) ?? []
+  const albums = await Promise.all(
+    (data.albums?.album ?? [])
+      .slice(0, 18)
+      .map(async (album: LastFmTopAlbum) => {
+        try {
+          const mbResponse = await fetch(
+            `https://musicbrainz.org/ws/2/release-group/?query=artist:${encodeURIComponent(
+              album.artist.name,
+            )} AND releasegroup:${encodeURIComponent(
+              album.name,
+            )}&fmt=json&limit=1`,
+          );
+
+          const mbData = await mbResponse.json();
+          const releaseGroup = mbData["release-groups"]?.[0];
+
+          if (!releaseGroup) return null;
+          return {
+            id: releaseGroup.id,
+            title: album.name,
+            artist: album.artist.name,
+            year:
+              releaseGroup["first-release-date"]?.split("-")[0] ?? "Unknown",
+            image:
+              album.image?.find((img) => img.size === "large")?.["#text"] ?? "",
+          };
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      }),
   );
+
+  return albums.filter((album): album is GenreAlbum => album !== null);
 }

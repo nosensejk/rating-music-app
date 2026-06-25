@@ -105,7 +105,7 @@ export default function SearchBar() {
                   />
 
                   <div>
-                    <p className="font-medium text-white">{album.title}</p>
+                    <p className="font-medium text-white truncate">{album.title}</p>
                     <p className="text-sm text-zinc-400">{album.year}</p>
                   </div>
                 </Link>

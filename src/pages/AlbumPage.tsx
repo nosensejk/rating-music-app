@@ -45,6 +45,8 @@ export default function AlbumPage() {
         const tags = await getAlbumTags(albumData.artist, albumData.title);
 
         setAlbum(albumData);
+        
+        
         setAvg(average);
         setUserRating(rating);
         setRatingsCount(ratingsResponse.data?.length ?? 0);
@@ -211,6 +213,12 @@ export default function AlbumPage() {
             </Link>
 
             <p className="mt-2 text-slate-400">{album.year}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="rounded-full bg-slate-700 px-3 py-1 text-sm text-slate-200">{album.type}</span>
+              {album.secondaryTypes.map((type) => (
+                <span key={type} className="rounded-full bg-slate-700 px-3 py-1 text-sm text-slate-200">{type}</span>
+              ))}
+            </div>
 
             <h2 className="mt-8 mb-4 text-2xl font-semibold">Tracklist</h2>
 

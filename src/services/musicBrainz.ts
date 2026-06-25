@@ -21,6 +21,14 @@ interface MusicBrainzArtist {
   name: string;
 }
 
+export interface GenreAlbum {
+  id: string;
+  title: string;
+  artist: string;
+  image: string;
+  year: string;
+}
+
 function sanitizeQuery(query: string) {
   return query.replace(/['"]/g, "").trim();
 }
@@ -157,6 +165,9 @@ export async function getAlbumDetails(
   );
 
   const releaseData = await releaseResponse.json();
+ 
+  console.log(releasesData);
+  
 
   const artist = releaseData["artist-credit"]?.[0]?.name || "Unknown";
 
@@ -168,11 +179,11 @@ export async function getAlbumDetails(
   return {
     id: releaseGroupId,
     title: releaseData.title,
-    type: releaseData["primary-type"] ?? "Unknown",
-    secondaryTypes: releaseData["secondary-types"] ?? [],
+    type: releasesData["primary-type"] ?? "Unknown",
+    secondaryTypes: releasesData["secondary-types"] ?? [],
     artist: releaseData["artist-credit"]?.[0]?.name || "Unknown",
     artistId: releaseData["artist-credit"]?.[0]?.artist?.id || "",
-    year: releaseData.date?.split("-")[0] || "Unknown",
+    year: releasesData.releases[0].date?.split("-")[0] || "Unknown",
     coverUrl,
     tracks:
       releaseData.media?.map(
@@ -191,5 +202,33 @@ export async function getAlbumDetails(
             })) ?? [],
         }),
       ) || [],
+  };
+}
+
+export async function findMusicBrainzAlbum(
+  artist: string,
+  title: string,
+): Promise<GenreAlbum | null> {
+  const response = await fetch(
+    `https://musicbrainz.org/ws/2/release-group/?query=artist:${encodeURIComponent(
+      artist,
+    )} AND releasegroup:${encodeURIComponent(title)}&fmt=json&limit=1`,
+  );
+
+  const data = await response.json();
+  const album = data["release-groups"]?.[0];
+
+  if (!album) return null;
+
+  const coverUrl =
+    (await getAlbumCover(artist, album.title)) ??
+    `https://coverartarchive.org/release-group/${album.id}/front`;
+
+  return {
+    id: album.id,
+    title: album.title,
+    artist,
+    year: album["first-release-date"]?.split("-")[0] ?? "Unknown",
+    image: coverUrl,
   };
 }

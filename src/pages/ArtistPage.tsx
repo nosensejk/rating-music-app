@@ -226,7 +226,7 @@ export default function ArtistPage() {
             <Link
               key={genre}
               to={`/genre/${genre.toLowerCase().replaceAll(" ", "-")}`}
-              className="rounded-full bg-slate-700 px-3 py-1 text-sm text-slate-200 hover:bg-slate-600"
+              className="rounded-full bg-slate-600 px-3 py-1 text-sm text-slate-200 hover:bg-slate-800"
             >
               {genre}
             </Link>
